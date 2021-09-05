@@ -13,15 +13,15 @@ import (
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 )
 
-var users []User
+var config Config
 
 func main() {
 	fmt.Println(os.Getwd())
 	loadConfig()
 
 	// Register users
-	for i := 0; i < len(users); i++ {
-		registerUser(users[i])
+	for i := 0; i < len(config.Users); i++ {
+		registerUser(config.Users[i])
 	}
 
 	startServer()
@@ -37,7 +37,10 @@ func loadConfig() {
 
 	// Parse json
 	data, _ := ioutil.ReadAll(file)
-	json.Unmarshal(data, &users)
+	err = json.Unmarshal(data, &config)
+	if err != nil {
+		fmt.Println(err)
+	}
 }
 
 func startServer() {
@@ -46,8 +49,8 @@ func startServer() {
 }
 
 func registerUser(user User) {
-	prometheus.Register(prometheus.NewGaugeFunc(
-		prometheus.GaugeOpts{
+	prometheus.Register(prometheus.NewCounterFunc(
+		prometheus.CounterOpts{
 			Name:        "user_issue_count",
 			Help:        "Number of issues assigned to user.",
 			ConstLabels: prometheus.Labels{"username": user.Name, "iid": strconv.Itoa(user.Iid)},
