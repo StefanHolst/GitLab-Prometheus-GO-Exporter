@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"net/http"
+	"strconv"
 
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
@@ -16,6 +17,8 @@ func main() {
 	fmt.Println(GetIssues(user))
 
 	registerUser(user)
+	registerUser(User{"someone", 10})
+	startServer()
 }
 
 func startServer() {
@@ -28,7 +31,7 @@ func registerUser(user User) {
 		prometheus.GaugeOpts{
 			Name:        "user_issue_count",
 			Help:        "Number of issues assigned to user.",
-			ConstLabels: prometheus.Labels{"username": user.Name, "iid": string(rune(user.Iid))},
+			ConstLabels: prometheus.Labels{"username": user.Name, "iid": strconv.Itoa(user.Iid)},
 		},
 		func() float64 { return GetIssues(user) },
 	))
