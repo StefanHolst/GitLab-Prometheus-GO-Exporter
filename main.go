@@ -2,23 +2,42 @@ package main
 
 import (
 	"fmt"
+	"io/ioutil"
 	"net/http"
+	"os"
 	"strconv"
+
+	"encoding/json"
 
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 )
 
+var users []User
+
 func main() {
-	fmt.Println("hej")
+	fmt.Println(os.Getwd())
+	loadConfig()
 
-	user := User{"stefan", 12}
+	// Register users
+	for i := 0; i < len(users); i++ {
+		registerUser(users[i])
+	}
 
-	fmt.Println(GetIssues(user))
-
-	registerUser(user)
-	registerUser(User{"someone", 10})
 	startServer()
+}
+
+func loadConfig() {
+	// Open file
+	file, err := os.Open("config.json")
+	if err != nil {
+		fmt.Println("Could not open file 'config.json'.")
+	}
+	defer file.Close()
+
+	// Parse json
+	data, _ := ioutil.ReadAll(file)
+	json.Unmarshal(data, &users)
 }
 
 func startServer() {
