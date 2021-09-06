@@ -1,12 +1,15 @@
 package main
 
+import "github.com/prometheus/client_golang/prometheus"
+
 type Config struct {
 	Users []User `json:"users"`
+	Token string `json:"token"`
 }
 
 type User struct {
-	Name             string `json:"name"`
-	Iid              int    `json:"iid"`
-	MergeRequests    int    `json:"mergeRequests"`
-	WipMergeRequests int    `json:"wipMergeRequests"`
+	UserName                 string `json:"username"`
+	Name                     string
+	MergeRequestsMetric      *prometheus.GaugeVec
+	DraftMergeRequestsMetric *prometheus.GaugeVec
 }

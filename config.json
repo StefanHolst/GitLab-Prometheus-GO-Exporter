@@ -1,8 +1,11 @@
 {
   "users": [
     {
-      "name": "stefan",
-      "iid":12
+      "username": "StefanHolst0"
+    },
+    {
+      "username": "asger"
     }
-  ]
+  ],
+  "token": "1VzXksMHksrANMueszWT"
 }

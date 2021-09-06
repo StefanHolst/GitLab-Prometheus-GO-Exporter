@@ -5,7 +5,6 @@ import (
 	"io/ioutil"
 	"net/http"
 	"os"
-	"strconv"
 
 	"encoding/json"
 
@@ -23,6 +22,8 @@ func main() {
 	for i := 0; i < len(config.Users); i++ {
 		registerUser(config.Users[i])
 	}
+
+	// UpdateData()
 
 	startServer()
 }
@@ -49,12 +50,39 @@ func startServer() {
 }
 
 func registerUser(user User) {
-	prometheus.Register(prometheus.NewCounterFunc(
-		prometheus.CounterOpts{
-			Name:        "user_issue_count",
-			Help:        "Number of issues assigned to user.",
-			ConstLabels: prometheus.Labels{"username": user.Name, "iid": strconv.Itoa(user.Iid)},
+	user.MergeRequestsMetric = prometheus.NewGaugeVec(
+		prometheus.GaugeOpts{
+			Name: "user_merge_request_count",
+			Help: "Number of merge requests assigned to user.",
 		},
-		func() float64 { return GetIssues(user) },
-	))
+		[]string{"user", "project"},
+	)
+	prometheus.Register(user.MergeRequestsMetric)
+
+	user.DraftMergeRequestsMetric = prometheus.NewGaugeVec(
+		prometheus.GaugeOpts{
+			Name: "user_draft_merge_request_count",
+			Help: "Number of draft merge requests assigned to user.",
+		},
+		[]string{"user", "project"},
+	)
+	prometheus.Register(user.DraftMergeRequestsMetric)
+
+	// prometheus.Register(prometheus.NewCounterFunc(
+	// 	prometheus.CounterOpts{
+	// 		Name:        "user_merge_request_count",
+	// 		Help:        "Number of merge requests assigned to user.",
+	// 		ConstLabels: prometheus.Labels{"username": user.Name, "name": user.Name},
+	// 	},
+	// 	func() float64 { return float64(user.MergeRequests) },
+	// ))
+
+	// prometheus.Register(prometheus.NewCounterFunc(
+	// 	prometheus.CounterOpts{
+	// 		Name:        "user_draft_merge_request_count",
+	// 		Help:        "Number of draft merge requests assigned to user.",
+	// 		ConstLabels: prometheus.Labels{"username": user.Name, "name": user.Name},
+	// 	},
+	// 	func() float64 { return float64(user.DraftMergeRequests) },
+	// ))
 }
