@@ -1,45 +1,70 @@
 package main
 
 import (
-	"math/rand"
+	"fmt"
+	"net/http"
 
 	"github.com/prometheus/client_golang/prometheus"
+	"github.com/prometheus/client_golang/prometheus/promhttp"
+	dto "github.com/prometheus/client_model/go"
 )
 
-type GitlabCollector struct {
-	MergeRequests     *prometheus.Desc
-	DraftMergeRequest *prometheus.Desc
+var config Config
+
+type GitlabGatherer struct {
 }
 
-func newGitlabCollector() *GitlabCollector {
-	return &GitlabCollector{
-		MergeRequests: prometheus.NewDesc("user_merge_requests_count",
-			"Number of merge requests assigned to user",
-			nil, nil,
-		),
-		DraftMergeRequest: prometheus.NewDesc("user_draft_merge_requests_count",
-			"Number of merge requests assigned to user",
-			nil, nil,
-		),
+func (s GitlabGatherer) Gather() ([]*dto.MetricFamily, error) {
+	// is this the event we are looking for?
+	fmt.Println("hej")
+	UpdateData(config)
+	return prometheus.DefaultGatherer.Gather()
+}
+
+func NewGitlabHandler() http.Handler {
+
+	// Register users
+	for i := 0; i < len(config.Users); i++ {
+		registerUser(config.Users[i])
 	}
+
+	return promhttp.HandlerFor(GitlabGatherer{}, promhttp.HandlerOpts{})
 }
 
-func (collector *GitlabCollector) Describe(ch chan<- *prometheus.Desc) {
+func registerUser(user User) {
+	user.MergeRequestsMetric = prometheus.NewGaugeVec(
+		prometheus.GaugeOpts{
+			Name: "user_merge_request_count",
+			Help: "Number of merge requests assigned to user.",
+		},
+		[]string{"user", "project"},
+	)
+	prometheus.Register(user.MergeRequestsMetric)
 
-	//Update this section with the each metric you create for a given collector
-	// ch <- collector.MergeRequests
-	// ch <- collector.DraftMergeRequest
-}
+	user.DraftMergeRequestsMetric = prometheus.NewGaugeVec(
+		prometheus.GaugeOpts{
+			Name: "user_draft_merge_request_count",
+			Help: "Number of draft merge requests assigned to user.",
+		},
+		[]string{"user", "project"},
+	)
+	prometheus.Register(user.DraftMergeRequestsMetric)
 
-func (collector *GitlabCollector) Collect(ch chan<- prometheus.Metric) {
+	// prometheus.Register(prometheus.NewCounterFunc(
+	// 	prometheus.CounterOpts{
+	// 		Name:        "user_merge_request_count",
+	// 		Help:        "Number of merge requests assigned to user.",
+	// 		ConstLabels: prometheus.Labels{"username": user.Name, "name": user.Name},
+	// 	},
+	// 	func() float64 { return float64(user.MergeRequests) },
+	// ))
 
-	//Implement logic here to determine proper metric value to return to prometheus
-	//for each descriptor or call other functions that do so.
-	var metricValue float64
-	metricValue = rand.Float64()
-
-	//Write latest value for each metric in the prometheus metric channel.
-	//Note that you can pass CounterValue, GaugeValue, or UntypedValue types here.
-	ch <- prometheus.MustNewConstMetric(collector.MergeRequests, prometheus.CounterValue, metricValue)
-	ch <- prometheus.MustNewConstMetric(collector.DraftMergeRequest, prometheus.CounterValue, metricValue)
+	// prometheus.Register(prometheus.NewCounterFunc(
+	// 	prometheus.CounterOpts{
+	// 		Name:        "user_draft_merge_request_count",
+	// 		Help:        "Number of draft merge requests assigned to user.",
+	// 		ConstLabels: prometheus.Labels{"username": user.Name, "name": user.Name},
+	// 	},
+	// 	func() float64 { return float64(user.DraftMergeRequests) },
+	// ))
 }

@@ -12,7 +12,7 @@ import (
 	"github.com/tidwall/gjson"
 )
 
-func UpdateData() {
+func UpdateData(config Config) {
 	// TODO: Get upcoming milestones for configured projects
 
 	// Format all usernames
@@ -22,7 +22,7 @@ func UpdateData() {
 	}
 
 	// Prepare request
-	payload := strings.NewReader("{\"query\":\"query {\\n    users(usernames: [" + strings.Join(usernames, ",") + "]) {\\n        nodes{\\n            assignedMergeRequests(first:100, state: opened){\\n                nodes{\\n                    title\\n                    draft\\n                    project{\\n                        name\\n                    }\\n                    milestone{\\n                        title\\n                        dueDate\\n                    }\\n                }\\n            }\\n            name\\n        }\\n    }\\n}\",\"variables\":{}}")
+	payload := strings.NewReader("{\"query\":\"query {\\n    users(usernames: [" + strings.Join(usernames, ",") + "]) {\\n        nodes{\\n            assignedMergeRequests(first:100, state: opened){\\n                nodes{\\n                    title\\n                    draft\\n                    project{\\n                        name\\n                    }\\n                    milestone{\\n                        title\\n                        dueDate\\n                    }\\n                }\\n            }\\n            name\\n            username\\n        }\\n    }\\n}\",\"variables\":{}}")
 	client := &http.Client{}
 	request, err := http.NewRequest("POST", "https://gitlab.com/api/graphql", payload)
 	if err != nil {
@@ -51,7 +51,7 @@ func UpdateData() {
 
 	for _, graphUser := range graphUsers {
 		fmt.Println(graphUser.Get("name").Value())
-		user := getUser(graphUser.Get("name").String())
+		user := getUser(graphUser.Get("username").String())
 		if user.UserName == "" {
 			continue
 		}
@@ -60,7 +60,7 @@ func UpdateData() {
 		var draftMergeRequests []gjson.Result
 
 		// Count all mergerequest for user
-		graphMergeRequests := graphUser.Get("assignedMergeRequests").Array()
+		graphMergeRequests := graphUser.Get("assignedMergeRequests.nodes").Array()
 		for _, graphMergeRequest := range graphMergeRequests {
 			if graphMergeRequest.Get("draft").Bool() {
 				draftMergeRequests = append(draftMergeRequests, graphMergeRequest)
@@ -68,6 +68,11 @@ func UpdateData() {
 				mergeRequests = append(mergeRequests, graphMergeRequest)
 			}
 		}
+
+		// group mergerequest by project
+		// set metric
+		user.MergeRequestsMetric.WithLabelValues(user.Name, "something").Set(float64(len(mergeRequests)))
+		user.DraftMergeRequestsMetric.WithLabelValues(user.Name, "something").Set(float64(len(draftMergeRequests)))
 	}
 }
 
