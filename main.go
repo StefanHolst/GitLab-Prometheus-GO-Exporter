@@ -13,9 +13,9 @@ func main() {
 	fmt.Println(os.Getwd())
 	loadConfig()
 
-	// UpdateData()
+	UpdateData(config)
 
-	startServer()
+	// startServer()
 }
 
 func loadConfig() {
