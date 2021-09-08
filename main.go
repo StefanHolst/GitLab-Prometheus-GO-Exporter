@@ -9,13 +9,15 @@ import (
 	"encoding/json"
 )
 
+var config Config
+
 func main() {
 	fmt.Println(os.Getwd())
 	loadConfig()
 
-	UpdateData(config)
+	// UpdateData(config)
 
-	// startServer()
+	startServer()
 }
 
 func loadConfig() {
