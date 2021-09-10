@@ -5,11 +5,14 @@ import (
 	"io/ioutil"
 	"net/http"
 	"strings"
+	"time"
 
 	"github.com/tidwall/gjson"
 )
 
 func UpdateData(config Config) {
+	fmt.Println("Updating " + time.Now().Format("Mon Jan _2 2006 15:04:05"))
+
 	// Format all username
 	var usernameQueries []string
 	for i := 0; i < len(config.Users); i++ {
@@ -49,7 +52,7 @@ func UpdateData(config Config) {
 
 	// filter MRs by milestone == null or milestone == project.upcomingMilestone
 	for _, graphUser := range graphUsers {
-		fmt.Println(graphUser.Get("name").Value())
+		fmt.Println("- " + graphUser.Get("name").String())
 		user := getUser(graphUser.Get("username").String())
 		user.Name = graphUser.Get("name").String()
 		if user.UserName == "" {
@@ -99,6 +102,8 @@ func UpdateData(config Config) {
 			user.DraftMergeRequestsMetric.WithLabelValues(user.Name, mr).Set(float64(draftMergeRequests[mr]))
 		}
 	}
+
+	fmt.Println("Update Complete")
 }
 
 func getUser(username string) User {

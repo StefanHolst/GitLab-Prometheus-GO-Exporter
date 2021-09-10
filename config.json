@@ -1,10 +1,25 @@
 {
   "users": [
     {
-      "username": "StefanHolst0"
+      "username": "StefanHolst"
     },
     {
       "username": "asger"
+    },
+    {
+      "username": "alexnlarsen"
+    },
+    {
+      "username": "dennis-ks"
+    },
+    {
+      "username": "dragos.brezoi"
+    },
+    {
+      "username": "jfaaborg"
+    },
+    {
+      "username": "romadsen-ks"
     }
   ],
   "token": "1VzXksMHksrANMueszWT"

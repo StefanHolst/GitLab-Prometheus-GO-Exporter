@@ -1,0 +1,175 @@
+{
+  "annotations": {
+    "list": [
+      {
+        "builtIn": 1,
+        "datasource": "-- Grafana --",
+        "enable": true,
+        "hide": true,
+        "iconColor": "rgba(0, 211, 255, 1)",
+        "name": "Annotations & Alerts",
+        "target": {
+          "limit": 100,
+          "matchAny": false,
+          "tags": [],
+          "type": "dashboard"
+        },
+        "type": "dashboard"
+      }
+    ]
+  },
+  "editable": true,
+  "gnetId": null,
+  "graphTooltip": 0,
+  "id": 1,
+  "iteration": 1631264687786,
+  "links": [],
+  "panels": [
+    {
+      "datasource": null,
+      "gridPos": {
+        "h": 3,
+        "w": 4.8,
+        "x": 0,
+        "y": 0
+      },
+      "id": 5,
+      "maxPerRow": 12,
+      "options": {
+        "content": "# $User      ",
+        "mode": "markdown"
+      },
+      "pluginVersion": "8.1.3",
+      "repeat": "User",
+      "repeatDirection": "h",
+      "transparent": true,
+      "type": "text"
+    },
+    {
+      "datasource": null,
+      "description": "$User",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          },
+          "unit": "short"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 18,
+        "w": 4.8,
+        "x": 0,
+        "y": 3
+      },
+      "id": 2,
+      "maxPerRow": 12,
+      "options": {
+        "colorMode": "value",
+        "graphMode": "area",
+        "justifyMode": "auto",
+        "orientation": "horizontal",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "text": {},
+        "textMode": "value_and_name"
+      },
+      "pluginVersion": "8.1.3",
+      "repeat": "User",
+      "repeatDirection": "h",
+      "targets": [
+        {
+          "exemplar": false,
+          "expr": "sort_desc(user_merge_request_count{user=\"$User\"})",
+          "format": "time_series",
+          "instant": false,
+          "interval": "",
+          "intervalFactor": 1,
+          "legendFormat": "{{project}}",
+          "refId": "A"
+        }
+      ],
+      "timeFrom": null,
+      "timeShift": null,
+      "transformations": [],
+      "transparent": true,
+      "type": "stat"
+    }
+  ],
+  "refresh": "5s",
+  "schemaVersion": 30,
+  "style": "dark",
+  "tags": [],
+  "templating": {
+    "list": [
+      {
+        "allValue": null,
+        "current": {
+          "selected": false,
+          "text": [
+            "Stefan Holst",
+            "Alexander Nørskov Larsen",
+            "Asger Iversen",
+            "Dennis Rasmussen",
+            "Rolf Madsen"
+          ],
+          "value": [
+            "Stefan Holst",
+            "Alexander Nørskov Larsen",
+            "Asger Iversen",
+            "Dennis Rasmussen",
+            "Rolf Madsen"
+          ]
+        },
+        "datasource": null,
+        "definition": "user_merge_request_count",
+        "description": null,
+        "error": null,
+        "hide": 0,
+        "includeAll": false,
+        "label": null,
+        "multi": true,
+        "name": "User",
+        "options": [],
+        "query": {
+          "query": "user_merge_request_count",
+          "refId": "StandardVariableQuery"
+        },
+        "refresh": 1,
+        "regex": "/user=\"(.*?)\"/",
+        "skipUrlSync": false,
+        "sort": 0,
+        "type": "query"
+      }
+    ]
+  },
+  "time": {
+    "from": "now-30m",
+    "to": "now"
+  },
+  "timepicker": {},
+  "timezone": "",
+  "title": "Temp",
+  "uid": "1cNBdHI7z",
+  "version": 9
+}
