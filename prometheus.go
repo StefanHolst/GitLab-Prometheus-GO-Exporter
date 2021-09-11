@@ -19,53 +19,32 @@ func (s GitlabGatherer) Gather() ([]*dto.MetricFamily, error) {
 
 func NewGitlabHandler() http.Handler {
 	// Register
-	mergeRequestsMetric := register("user_merge_request_count", "Number of merge requests assigned to user.")
-	draftMergeRequestsMetric := register("user_draft_merge_request_count", "Number of draft merge requests assigned to user.")
+	mergeRequestsMetric := registerGauge("user_merge_request_count", "Number of merge requests assigned to user.", []string{"user", "project"})
+	draftMergeRequestsMetric := registerGauge("user_draft_merge_request_count", "Number of draft merge requests assigned to user.", []string{"user", "project"})
+	projectMetric := registerGauge("project_board", "Project Board", []string{"project", "label", "order"})
 
-	// Register users
+	// Add metric to users
 	for i := 0; i < len(config.Users); i++ {
 		config.Users[i].MergeRequestsMetric = mergeRequestsMetric
 		config.Users[i].DraftMergeRequestsMetric = draftMergeRequestsMetric
 	}
 
+	// Add metric to projects
+	for i := 0; i < len(config.Projects); i++ {
+		config.Projects[i].Metric = projectMetric
+	}
+
 	return promhttp.HandlerFor(GitlabGatherer{}, promhttp.HandlerOpts{})
 }
 
-func register(name string, help string) *prometheus.GaugeVec {
+func registerGauge(name string, help string, labels []string) *prometheus.GaugeVec {
 	gaugeVec := prometheus.NewGaugeVec(
 		prometheus.GaugeOpts{
 			Name: name,
 			Help: help,
 		},
-		[]string{"user", "project"},
+		labels,
 	)
 	prometheus.MustRegister(gaugeVec)
 	return gaugeVec
-
-	// user.DraftMergeRequestsMetric = prometheus.NewGaugeVec(
-	// 	prometheus.GaugeOpts{
-	// 		Name: "user_draft_merge_request_count",
-	// 		Help: "Number of draft merge requests assigned to user.",
-	// 	},
-	// 	[]string{"user", "project"},
-	// )
-	// prometheus.MustRegister(user.DraftMergeRequestsMetric)
-
-	// prometheus.Register(prometheus.NewCounterFunc(
-	// 	prometheus.CounterOpts{
-	// 		Name:        "user_merge_request_count",
-	// 		Help:        "Number of merge requests assigned to user.",
-	// 		ConstLabels: prometheus.Labels{"username": user.Name, "name": user.Name},
-	// 	},
-	// 	func() float64 { return float64(user.MergeRequests) },
-	// ))
-
-	// prometheus.Register(prometheus.NewCounterFunc(
-	// 	prometheus.CounterOpts{
-	// 		Name:        "user_draft_merge_request_count",
-	// 		Help:        "Number of draft merge requests assigned to user.",
-	// 		ConstLabels: prometheus.Labels{"username": user.Name, "name": user.Name},
-	// 	},
-	// 	func() float64 { return float64(user.DraftMergeRequests) },
-	// ))
 }

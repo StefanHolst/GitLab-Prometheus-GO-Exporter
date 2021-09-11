@@ -22,3 +22,4 @@ scrape_configs:
   - targets:
     - localhost:9090
     - 10.149.108.110:5000
+    - 192.168.163.178:5000

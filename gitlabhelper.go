@@ -1,9 +1,11 @@
 package main
 
 import (
+	"errors"
 	"fmt"
 	"io/ioutil"
 	"net/http"
+	"strconv"
 	"strings"
 	"time"
 
@@ -33,14 +35,14 @@ func UpdateData(config Config) {
 	// Get a map of all project ids
 	projectUpcomingMilestones := getAllProjectFromUsers(data)
 
-	// Format all projects
-	var projectQueries []string
+	// Format all user project ids
+	var userProjectQueries []string
 	for key := range projectUpcomingMilestones {
-		projectQueries = append(projectQueries, "\\\""+key+"\\\"")
+		userProjectQueries = append(userProjectQueries, "\\\""+key+"\\\"")
 	}
 
-	// Download milestones for all projects
-	payload = strings.NewReader("{\"query\":\"query {\\n    projects(ids:[" + strings.Join(projectQueries, ",") + "]) {\\n        nodes{\\n            id\\n            milestones(state:active, sort: DUE_DATE_DESC,first:1){\\n                nodes{\\n                    id\\n                    title\\n                }\\n            }\\n        }\\n    }\\n}\",\"variables\":{}}")
+	// Download milestones for all project ids
+	payload = strings.NewReader("{\"query\":\"query {\\n    projects(ids:[" + strings.Join(userProjectQueries, ",") + "]) {\\n        nodes{\\n            id\\n            milestones(state:active, sort: DUE_DATE_DESC,first:1){\\n                nodes{\\n                    id\\n                    title\\n                }\\n            }\\n        }\\n    }\\n}\",\"variables\":{}}")
 	data, err = downloadData(payload)
 	if err != nil {
 		fmt.Println(err)
@@ -53,11 +55,12 @@ func UpdateData(config Config) {
 	// filter MRs by milestone == null or milestone == project.upcomingMilestone
 	for _, graphUser := range graphUsers {
 		fmt.Println("- " + graphUser.Get("name").String())
-		user := getUser(graphUser.Get("username").String())
-		user.Name = graphUser.Get("name").String()
-		if user.UserName == "" {
+		user, err := getUser(graphUser.Get("username").String())
+		if err != nil {
+			fmt.Println(err.Error())
 			continue
 		}
+		user.Name = graphUser.Get("name").String()
 
 		mergeRequests := make(map[string]int)
 		draftMergeRequests := make(map[string]int)
@@ -103,16 +106,89 @@ func UpdateData(config Config) {
 		}
 	}
 
+	// Format all projects
+	fmt.Println("Updating projects")
+	var projectQueries []string
+	for _, project := range config.Projects {
+		projectQueries = append(projectQueries, "\\\""+project.Id+"\\\"")
+	}
+
+	// Download issues for all projects
+	payload = strings.NewReader("{\"query\":\"query {\\n    projects(ids:[" + strings.Join(projectQueries, ",") + "]) {\\n        nodes{\\n            id\\n            name\\n            issues(milestoneWildcardId: UPCOMING){\\n                nodes{\\n                    state\\n                    labels{\\n                        nodes{\\n                            title\\n                        }\\n                    }\\n                }\\n            }\\n        }\\n    }\\n}\",\"variables\":{}}")
+	data, err = downloadData(payload)
+
+	// Get all projects
+	graphProjects := data.Get("projects.nodes").Array()
+	for _, graphProject := range graphProjects {
+		fmt.Println("- " + graphProject.Get("name").String())
+		project, err := getProject(graphProject.Get("id").String())
+		if err != nil {
+			fmt.Println(err.Error())
+			continue
+		}
+
+		projectLabelCount := make(map[string]int)
+		for _, label := range project.Labels {
+			projectLabelCount[label] = 0
+		}
+
+		// Count issues in project
+		issues := graphProject.Get("issues.nodes").Array()
+		for _, issue := range issues {
+			// If state is closed that takes priority over labels
+			issueState := issue.Get("state").String()
+			if issueState == "closed" {
+				projectLabelCount[issueState] = projectLabelCount[issueState] + 1
+				continue
+			}
+
+			// Try matching issues labels to project labels
+			foundLabel := false
+			for _, label := range issue.Get("labels.nodes").Array() {
+				labelTitle := label.Get("title").String()
+				_, ok := projectLabelCount[labelTitle]
+				if ok { // if label exists
+					projectLabelCount[labelTitle] = projectLabelCount[labelTitle] + 1
+					foundLabel = true
+					break
+				}
+			}
+			if foundLabel {
+				continue
+			}
+
+			// If no label match was found, add as an opened issue
+			projectLabelCount[issueState] = projectLabelCount[issueState] + 1
+		}
+
+		// Update metrics
+		index := 0
+		for label := range projectLabelCount {
+			fmt.Println(label + " " + strconv.Itoa(index))
+			project.Metric.WithLabelValues(graphProject.Get("name").String(), label, strconv.Itoa(index)).Set(float64(projectLabelCount[label]))
+			index++
+		}
+	}
+
 	fmt.Println("Update Complete")
 }
 
-func getUser(username string) User {
+func getUser(username string) (User, error) {
 	for _, user := range config.Users {
 		if user.UserName == username {
-			return user
+			return user, nil
 		}
 	}
-	return User{}
+	return User{}, errors.New("Could not find user: " + username)
+}
+
+func getProject(id string) (Project, error) {
+	for _, project := range config.Projects {
+		if project.Id == id {
+			return project, nil
+		}
+	}
+	return Project{}, errors.New("Could not find project: " + id)
 }
 
 func setUpcomingMilestoneForProjects(data gjson.Result, projectUpcomingMilestones map[string]string) {
@@ -136,11 +212,6 @@ func getAllProjectFromUsers(data gjson.Result) map[string]string {
 			projectMap[id] = ""
 		}
 	}
-
-	// var projectIds []string
-	// for key := range projectMap {
-	// 	projectIds = append(projectIds, key)
-	// }
 
 	return projectMap
 }

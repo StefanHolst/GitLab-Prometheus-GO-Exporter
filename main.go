@@ -38,5 +38,8 @@ func loadConfig() {
 
 func startServer() {
 	http.Handle("/metrics", NewGitlabHandler())
-	http.ListenAndServe(":5000", nil)
+	err := http.ListenAndServe(":5000", nil)
+	if err != nil {
+		fmt.Println(err)
+	}
 }

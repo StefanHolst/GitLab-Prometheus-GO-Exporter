@@ -22,5 +22,11 @@
       "username": "romadsen-ks"
     }
   ],
+  "projects":[
+    {
+      "id": "gid://gitlab/Project/10858059",
+      "labels": [ "opened", "flow::To be Discussed", "flow::In Progress", "flow::Merge Requested", "closed"]
+    }
+  ],
   "token": "1VzXksMHksrANMueszWT"
 }
