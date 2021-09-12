@@ -15,6 +15,27 @@ import (
 func UpdateData(config Config) {
 	fmt.Println("Updating " + time.Now().Format("Mon Jan _2 2006 15:04:05"))
 
+	var err error
+	if len(config.Users) > 0 {
+		err = updateUsers()
+		if err != nil {
+			fmt.Println("Failed to update users")
+			fmt.Println(err.Error())
+		}
+	}
+
+	if len(config.Projects) > 0 {
+		err = updateProjects()
+		if err != nil {
+			fmt.Println("Failed to update projects")
+			fmt.Println(err.Error())
+		}
+	}
+
+	fmt.Println("Update Complete")
+}
+
+func updateUsers() error {
 	// Format all username
 	var usernameQueries []string
 	for i := 0; i < len(config.Users); i++ {
@@ -26,7 +47,7 @@ func UpdateData(config Config) {
 	data, err := downloadData(payload)
 	if err != nil {
 		fmt.Println(err)
-		return
+		return errors.New("Failed to download users payload")
 	}
 
 	// Get all users
@@ -46,7 +67,7 @@ func UpdateData(config Config) {
 	data, err = downloadData(payload)
 	if err != nil {
 		fmt.Println(err)
-		return
+		return errors.New("Failed to download upcoming milestones")
 	}
 
 	// Set upcoming milestone for each project
@@ -106,6 +127,10 @@ func UpdateData(config Config) {
 		}
 	}
 
+	return nil
+}
+
+func updateProjects() error {
 	// Format all projects
 	fmt.Println("Updating projects")
 	var projectQueries []string
@@ -114,14 +139,17 @@ func UpdateData(config Config) {
 	}
 
 	// Download issues for all projects
-	payload = strings.NewReader("{\"query\":\"query {\\n    projects(ids:[" + strings.Join(projectQueries, ",") + "]) {\\n        nodes{\\n            id\\n            name\\n            issues(milestoneWildcardId: UPCOMING){\\n                nodes{\\n                    state\\n                    labels{\\n                        nodes{\\n                            title\\n                        }\\n                    }\\n                    milestone{\\n                        dueDate\\n                    }\\n                }\\n            }\\n        }\\n    }\\n}\",\"variables\":{}}")
-	data, err = downloadData(payload)
+	payload := strings.NewReader("{\"query\":\"query {\\n    projects(ids:[" + strings.Join(projectQueries, ",") + "]) {\\n        nodes{\\n            id\\n            name\\n            issues(milestoneWildcardId: UPCOMING){\\n                nodes{\\n                    state\\n                    labels{\\n                        nodes{\\n                            title\\n                        }\\n                    }\\n                    }\\n            }\\n        }\\n    }\\n}\",\"variables\":{}}")
+	data, err := downloadData(payload)
+	if err != nil {
+		fmt.Println(err)
+		return errors.New("Failed to download project payload")
+	}
 
 	// Get all projects
 	graphProjects := data.Get("projects.nodes").Array()
 	for _, graphProject := range graphProjects {
-		fmt.Print("- " + graphProject.Get("name").String())
-		fmt.Println(" - Due Date: " + graphProject.Get("issues.nodes.0.milestone.dueDate").String())
+		fmt.Println("- " + graphProject.Get("name").String())
 		project, err := getProject(graphProject.Get("id").String())
 		if err != nil {
 			fmt.Println(err.Error())
@@ -169,12 +197,11 @@ func UpdateData(config Config) {
 				label.Text,
 				label.Label,
 				strconv.Itoa(label.Order),
-				graphProject.Get("issues.nodes.0.milestone.dueDate").String(),
 				strconv.Itoa(label.Order)).Set(float64(projectLabelCount[label.Label]))
 		}
 	}
 
-	fmt.Println("Update Complete")
+	return nil
 }
 
 func getUser(username string) (User, error) {
