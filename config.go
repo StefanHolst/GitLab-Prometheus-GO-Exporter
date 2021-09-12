@@ -16,7 +16,12 @@ type User struct {
 }
 
 type Project struct {
-	Id     string   `json:"Id"`
-	Labels []string `json:"labels"`
+	Id     string  `json:"Id"`
+	Labels []Label `json:"labels"`
 	Metric *prometheus.GaugeVec
+}
+type Label struct {
+	Text  string `json:"text"`
+	Label string `json:"label"`
+	Order int    `json:"order"`
 }

@@ -21,7 +21,7 @@ func NewGitlabHandler() http.Handler {
 	// Register
 	mergeRequestsMetric := registerGauge("user_merge_request_count", "Number of merge requests assigned to user.", []string{"user", "project"})
 	draftMergeRequestsMetric := registerGauge("user_draft_merge_request_count", "Number of draft merge requests assigned to user.", []string{"user", "project"})
-	projectMetric := registerGauge("project_board", "Project Board", []string{"project", "label", "order"})
+	projectMetric := registerGauge("project_board", "Project Board", []string{"project", "text", "label", "order", "dueDate", "aaa"})
 
 	// Add metric to users
 	for i := 0; i < len(config.Users); i++ {

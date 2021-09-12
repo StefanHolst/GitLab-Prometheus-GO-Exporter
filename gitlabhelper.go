@@ -114,13 +114,14 @@ func UpdateData(config Config) {
 	}
 
 	// Download issues for all projects
-	payload = strings.NewReader("{\"query\":\"query {\\n    projects(ids:[" + strings.Join(projectQueries, ",") + "]) {\\n        nodes{\\n            id\\n            name\\n            issues(milestoneWildcardId: UPCOMING){\\n                nodes{\\n                    state\\n                    labels{\\n                        nodes{\\n                            title\\n                        }\\n                    }\\n                }\\n            }\\n        }\\n    }\\n}\",\"variables\":{}}")
+	payload = strings.NewReader("{\"query\":\"query {\\n    projects(ids:[" + strings.Join(projectQueries, ",") + "]) {\\n        nodes{\\n            id\\n            name\\n            issues(milestoneWildcardId: UPCOMING){\\n                nodes{\\n                    state\\n                    labels{\\n                        nodes{\\n                            title\\n                        }\\n                    }\\n                    milestone{\\n                        dueDate\\n                    }\\n                }\\n            }\\n        }\\n    }\\n}\",\"variables\":{}}")
 	data, err = downloadData(payload)
 
 	// Get all projects
 	graphProjects := data.Get("projects.nodes").Array()
 	for _, graphProject := range graphProjects {
-		fmt.Println("- " + graphProject.Get("name").String())
+		fmt.Print("- " + graphProject.Get("name").String())
+		fmt.Println(" - Due Date: " + graphProject.Get("issues.nodes.0.milestone.dueDate").String())
 		project, err := getProject(graphProject.Get("id").String())
 		if err != nil {
 			fmt.Println(err.Error())
@@ -129,7 +130,7 @@ func UpdateData(config Config) {
 
 		projectLabelCount := make(map[string]int)
 		for _, label := range project.Labels {
-			projectLabelCount[label] = 0
+			projectLabelCount[label.Label] = 0
 		}
 
 		// Count issues in project
@@ -162,11 +163,14 @@ func UpdateData(config Config) {
 		}
 
 		// Update metrics
-		index := 0
-		for label := range projectLabelCount {
-			fmt.Println(label + " " + strconv.Itoa(index))
-			project.Metric.WithLabelValues(graphProject.Get("name").String(), label, strconv.Itoa(index)).Set(float64(projectLabelCount[label]))
-			index++
+		for _, label := range project.Labels {
+			project.Metric.WithLabelValues(
+				graphProject.Get("name").String(),
+				label.Text,
+				label.Label,
+				strconv.Itoa(label.Order),
+				graphProject.Get("issues.nodes.0.milestone.dueDate").String(),
+				strconv.Itoa(label.Order)).Set(float64(projectLabelCount[label.Label]))
 		}
 	}
 

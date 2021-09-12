@@ -25,7 +25,63 @@
   "projects":[
     {
       "id": "gid://gitlab/Project/10858059",
-      "labels": [ "opened", "flow::To be Discussed", "flow::In Progress", "flow::Merge Requested", "closed"]
+      "labels": [ 
+        {
+          "text": "Open",
+          "label": "opened",
+          "order": 0
+        },
+        {
+          "text": "To be Discussed",
+          "label": "flow::To be Discussed",
+          "order": 1
+        },
+        {
+          "text": "In Progress",
+          "label": "flow::In Progress",
+          "order": 2
+        },
+        {
+          "text": "Merge Requested",
+          "label": "flow::Merge Requested",
+          "order": 3
+        },
+        {
+          "text": "Closed",
+          "label": "closed",
+          "order": 4
+        }
+      ]
+    },
+    {
+      "id": "gid://gitlab/Project/14090709",
+      "labels": [ 
+        {
+          "text": "Open",
+          "label": "opened",
+          "order": 0
+        },
+        {
+          "text": "To be Discussed",
+          "label": "flow::To be Discussed",
+          "order": 1
+        },
+        {
+          "text": "In Progress",
+          "label": "flow::In Progress",
+          "order": 2
+        },
+        {
+          "text": "Merge Requested",
+          "label": "flow::Merge Requested",
+          "order": 3
+        },
+        {
+          "text": "Closed",
+          "label": "closed",
+          "order": 4
+        }
+      ]
     }
   ],
   "token": "1VzXksMHksrANMueszWT"
