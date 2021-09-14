@@ -5,6 +5,7 @@ import "github.com/prometheus/client_golang/prometheus"
 type Config struct {
 	Users    []User    `json:"users"`
 	Projects []Project `json:"projects"`
+	Servers  []string  `json:"servers"`
 	Token    string    `json:"token"`
 }
 

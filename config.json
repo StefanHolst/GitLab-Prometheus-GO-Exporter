@@ -84,5 +84,6 @@
       ]
     }
   ],
+  "servers": [ "https://gitlab.com" ],
   "token": "1VzXksMHksrANMueszWT"
 }

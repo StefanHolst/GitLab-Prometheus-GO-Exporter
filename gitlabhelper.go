@@ -13,30 +13,38 @@ import (
 )
 
 func UpdateData(config Config) {
+	fmt.Println("========================================================")
 	fmt.Println("Updating " + time.Now().Format("Mon Jan _2 2006 15:04:05"))
 
 	var err error
-	if len(config.Users) > 0 {
-		err = updateUsers()
-		if err != nil {
-			fmt.Println("Failed to update users")
-			fmt.Println(err.Error())
+
+	for _, server := range config.Servers {
+		fmt.Println("Server: " + server + "\n")
+
+		if len(config.Users) > 0 {
+			err = updateUsers(server)
+			if err != nil {
+				fmt.Println("Failed to update users")
+				fmt.Println(err.Error())
+			}
+		}
+
+		if len(config.Projects) > 0 {
+			err = updateProjects(server)
+			if err != nil {
+				fmt.Println("Failed to update projects")
+				fmt.Println(err.Error())
+			}
 		}
 	}
 
-	if len(config.Projects) > 0 {
-		err = updateProjects()
-		if err != nil {
-			fmt.Println("Failed to update projects")
-			fmt.Println(err.Error())
-		}
-	}
-
-	fmt.Println("Update Complete")
+	fmt.Println("\nUpdate Complete")
+	fmt.Println("========================================================")
 }
 
-func updateUsers() error {
+func updateUsers(server string) error {
 	// Format all username
+	fmt.Println("Updating users:")
 	var usernameQueries []string
 	for i := 0; i < len(config.Users); i++ {
 		usernameQueries = append(usernameQueries, "\\\""+config.Users[i].UserName+"\\\"")
@@ -44,7 +52,7 @@ func updateUsers() error {
 
 	// Download all users mergerequests
 	payload := strings.NewReader("{\"query\":\"query {\\n    users(usernames: [" + strings.Join(usernameQueries, ",") + "]) {\\n        nodes{\\n            assignedMergeRequests(first:100, state: opened){\\n                nodes{\\n                    title\\n                    draft\\n                    project{\\n                        id\\n                        name\\n                    }\\n                    milestone{\\n                        id\\n                    }\\n                }\\n            }\\n            name\\n            username\\n        }\\n    }\\n}\",\"variables\":{}}")
-	data, err := downloadData(payload)
+	data, err := downloadData(server, payload)
 	if err != nil {
 		fmt.Println(err)
 		return errors.New("Failed to download users payload")
@@ -64,7 +72,7 @@ func updateUsers() error {
 
 	// Download milestones for all project ids
 	payload = strings.NewReader("{\"query\":\"query {\\n    projects(ids:[" + strings.Join(userProjectQueries, ",") + "]) {\\n        nodes{\\n            id\\n            milestones(state:active, sort: DUE_DATE_DESC,first:1){\\n                nodes{\\n                    id\\n                    title\\n                }\\n            }\\n        }\\n    }\\n}\",\"variables\":{}}")
-	data, err = downloadData(payload)
+	data, err = downloadData(server, payload)
 	if err != nil {
 		fmt.Println(err)
 		return errors.New("Failed to download upcoming milestones")
@@ -130,9 +138,9 @@ func updateUsers() error {
 	return nil
 }
 
-func updateProjects() error {
+func updateProjects(server string) error {
 	// Format all projects
-	fmt.Println("Updating projects")
+	fmt.Println("\nUpdating projects:")
 	var projectQueries []string
 	for _, project := range config.Projects {
 		projectQueries = append(projectQueries, "\\\""+project.Id+"\\\"")
@@ -140,7 +148,7 @@ func updateProjects() error {
 
 	// Download issues for all projects
 	payload := strings.NewReader("{\"query\":\"query {\\n    projects(ids:[" + strings.Join(projectQueries, ",") + "]) {\\n        nodes{\\n            id\\n            name\\n            issues(milestoneWildcardId: UPCOMING){\\n                nodes{\\n                    state\\n                    labels{\\n                        nodes{\\n                            title\\n                        }\\n                    }\\n                    }\\n            }\\n        }\\n    }\\n}\",\"variables\":{}}")
-	data, err := downloadData(payload)
+	data, err := downloadData(server, payload)
 	if err != nil {
 		fmt.Println(err)
 		return errors.New("Failed to download project payload")
@@ -247,9 +255,9 @@ func getAllProjectFromUsers(data gjson.Result) map[string]string {
 	return projectMap
 }
 
-func downloadData(payload *strings.Reader) (gjson.Result, error) {
+func downloadData(server string, payload *strings.Reader) (gjson.Result, error) {
 	client := &http.Client{}
-	request, err := http.NewRequest("POST", "https://gitlab.com/api/graphql", payload)
+	request, err := http.NewRequest("POST", server+"/api/graphql", payload)
 	if err != nil {
 		fmt.Println(err)
 		return gjson.Result{}, err
