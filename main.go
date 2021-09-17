@@ -6,7 +6,7 @@ import (
 	"net/http"
 	"os"
 
-	"encoding/json"
+	"gopkg.in/yaml.v2"
 )
 
 var config Config
@@ -22,7 +22,7 @@ func main() {
 
 func loadConfig() {
 	// Open file
-	file, err := os.Open("config.json")
+	file, err := os.Open("config.yaml")
 	if err != nil {
 		fmt.Println("Could not open file 'config.json'.")
 	}
@@ -30,7 +30,7 @@ func loadConfig() {
 
 	// Parse json
 	data, _ := ioutil.ReadAll(file)
-	err = json.Unmarshal(data, &config)
+	err = yaml.Unmarshal(data, &config)
 	if err != nil {
 		fmt.Println(err)
 	}

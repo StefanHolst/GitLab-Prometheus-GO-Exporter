@@ -13,7 +13,6 @@ type GitlabGatherer struct {
 
 func (s GitlabGatherer) Gather() ([]*dto.MetricFamily, error) {
 	UpdateData(config)
-	// config.Users[0].MergeRequestsMetric.WithLabelValues("someone", "something").Set(1)
 	return prometheus.DefaultGatherer.Gather()
 }
 

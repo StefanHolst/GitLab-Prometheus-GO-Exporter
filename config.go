@@ -3,26 +3,26 @@ package main
 import "github.com/prometheus/client_golang/prometheus"
 
 type Config struct {
-	Users    []User    `json:"users"`
-	Projects []Project `json:"projects"`
-	Servers  []string  `json:"servers"`
-	Token    string    `json:"token"`
+	Users    []User    `yaml:"users"`
+	Projects []Project `yaml:"projects"`
+	Servers  []string  `yaml:"servers"`
+	Token    string    `yaml:"token"`
 }
 
 type User struct {
-	UserName                 string `json:"username"`
+	UserName                 string `yaml:"username"`
 	Name                     string
 	MergeRequestsMetric      *prometheus.GaugeVec
 	DraftMergeRequestsMetric *prometheus.GaugeVec
 }
 
 type Project struct {
-	Id     string  `json:"Id"`
-	Labels []Label `json:"labels"`
+	Id     string  `yaml:"id"`
+	Labels []Label `yaml:"labels"`
 	Metric *prometheus.GaugeVec
 }
 type Label struct {
-	Text  string `json:"text"`
-	Label string `json:"label"`
-	Order int    `json:"order"`
+	Text  string `yaml:"text"`
+	Label string `yaml:"label"`
+	Order int    `yaml:"order"`
 }

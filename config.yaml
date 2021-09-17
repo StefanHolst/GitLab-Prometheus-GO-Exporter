@@ -1,25 +1,30 @@
-global:
-  scrape_interval: 15s
-  scrape_timeout: 10s
-  evaluation_interval: 15s
-alerting:
-  alertmanagers:
-  - follow_redirects: true
-    scheme: http
-    timeout: 10s
-    api_version: v2
-    static_configs:
-    - targets: []
-scrape_configs:
-- job_name: prometheus
-  honor_timestamps: true
-  scrape_interval: 15s
-  scrape_timeout: 10s
-  metrics_path: /metrics
-  scheme: http
-  follow_redirects: true
-  static_configs:
-  - targets:
-    - localhost:9090
-    - 10.149.108.110:5000
-    - 192.168.163.178:5000
+servers:
+    - https://gitlab.com
+token: 1234
+users:
+    - username: StefanHolst
+    - username: asger
+    - username: alexnlarsen
+    - username: dennis-ks
+    - username: dragos.brezoi
+    - username: jfaaborg
+    - username: romadsen-ks
+    - username: eneshaluk
+projects:
+    - id: gid://gitlab/Project/10858059
+      labels:
+          - text: Open
+            label: opened
+            order: 0
+          - text: To be Discussed
+            label: flow::To be Discussed
+            order: 1
+          - text: In Progress
+            label: flow::In Progress
+            order: 2
+          - text: Merge Requested
+            label: flow::Merge Requested
+            order: 3
+          - text: Closed
+            label: closed
+            order: 4
